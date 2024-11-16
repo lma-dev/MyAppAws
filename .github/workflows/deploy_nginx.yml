@@ -1,0 +1,55 @@
+name: Deploy to Bitnami Nginx
+
+on:
+  push:
+    branches:
+      - main # or the branch you want to deploy
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Set up SSH
+        uses: webfactory/ssh-agent@v0.5.3
+        with:
+          ssh-private-key: ${{ secrets.BITNAMI_BETA_KEY }}
+
+      - name: Deploy to Bitnami Nginx
+        run: |
+          ssh -o StrictHostKeyChecking=no -t bitnami@13.239.186.160 << 'EOF'
+          sudo su - << 'SUDO_EOF'
+          # Navigate to your project directory
+          cd  /opt/bitnami/nginx/html/MyAppAws/
+
+          # Pull the latest changes from the specified branch
+          echo "Pulling latest changes from origin/main..."
+          git fetch origin main
+          git reset --hard origin/main  # Ensure your local branch matches the remote branch
+
+          MODIFIED_FILES=$(git diff --name-only HEAD origin/main)
+          echo "modified_files=$MODIFIED_FILES" >> $GITHUB_ENV
+          echo "Modified files: $MODIFIED_FILES"
+
+          # Install dependencies
+          echo "Installing Composer dependencies..."
+          composer install --no-interaction --prefer-dist --optimize-autoloader
+
+          # Run migrations (if necessary)
+          echo "Running migrations..."
+          if ! php artisan migrate --force; then
+              echo "Migration failed, exiting."
+              exit 1
+          fi
+
+          # Clear caches
+          echo "Clearing caches..."
+          php artisan cache:clear
+          php artisan route:clear
+          npm install
+          npm run build
+
+          echo "Deployment completed successfully."
+          EOF
