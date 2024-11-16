@@ -15,7 +15,7 @@ jobs:
       - name: Set up SSH
         uses: webfactory/ssh-agent@v0.5.3
         with:
-          ssh-private-key: ${{ secrets.BITNAMI_BETA_KEY }}
+          ssh-private-key: ${{ secrets.BITNAMI_DEPLOY_KEY }}
 
       - name: Deploy to Bitnami Nginx
         run: |
