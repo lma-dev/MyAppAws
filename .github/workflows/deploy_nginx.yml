@@ -16,7 +16,6 @@ jobs:
         uses: webfactory/ssh-agent@v0.5.3
         with:
           ssh-private-key: ${{ secrets.BITNAMI_DEPLOY_KEY }}
-
       - name: Deploy to Bitnami Nginx
         run: |
           ssh -o StrictHostKeyChecking=no -t bitnami@13.239.186.160 << 'EOF'
